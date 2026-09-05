@@ -199,7 +199,7 @@ jobs:
           name: pipeline-build-artifacts
           path: build-artifacts/
           retention-days: 1
-
+  
   ### PRACTICE CHALLENGE 3 ###
   deploy:
     name: Deploy to Production (Simulated)
@@ -215,11 +215,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pipeline-build-artifacts
-          path: deploy-artifacts/
+          path: deploy-artifacts
 
       - name: Validate deployment prerequisites and artifacts
         run: |
           echo "🔍 Validating downloaded artifacts..."
+          ls -la deploy-artifacts/
           if [ ! -f deploy-artifacts/metadata.txt ] || [ ! -f deploy-artifacts/pipeline-image.tar.gz ]; then
             echo "❌ Missing build artifacts"
             exit 1
@@ -232,8 +233,8 @@ jobs:
           echo "🚀 Initiating rolling update to production environment..."
           sleep 2
           echo "📦 Extracting package and deploying container..."
-          tar -xzf deploy-artifacts/pipeline-image.tar.gz
-          python3 -c "import app; print('Application boot check: OK')"
+          tar -xzf deploy-artifacts/pipeline-image.tar.gz -C deploy-artifacts/
+          cd deploy-artifacts && python3 -c "import app; print('Application boot check: OK')"
           echo "✅ Deployment rollout successful"
 
       - name: Run comprehensive health checks
@@ -254,6 +255,7 @@ jobs:
           echo "✅ Rollback executed successfully. Traffic redirected."
 
       - name: Deployment Summary
+        if: always()
         run: |
           echo ""
           echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY! 🎉"
@@ -272,10 +274,3 @@ jobs:
           echo "  ├── Health Check Status: All systems operational"
           echo "  ├── Performance Validation: Within acceptable thresholds"
           echo "  └── Rollback Capability: ✅ Enabled and tested"
-          echo ""
-          echo "🔗 Next Steps:"
-          echo "  • Monitor production metrics dashboard"
-          echo "  • Validate data pipeline processing performance"
-          echo "  • Review deployment logs and system health"
-          echo "  • Update team documentation and runbooks"
-          echo "  • Schedule post-deployment review meeting"
